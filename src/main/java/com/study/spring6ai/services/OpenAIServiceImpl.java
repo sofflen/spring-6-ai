@@ -3,6 +3,7 @@ package com.study.spring6ai.services;
 import com.study.spring6ai.model.Answer;
 import com.study.spring6ai.model.GetCapitalRequest;
 import com.study.spring6ai.model.GetCapitalResponse;
+import com.study.spring6ai.model.GetCapitalWithInfoResponse;
 import com.study.spring6ai.model.Question;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
@@ -23,8 +24,6 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     @Value("classpath:templates/get-capital-prompt.st")
     private Resource getCapitalPrompt;
-    @Value("classpath:templates/get-capital-with-info-prompt.st")
-    private Resource getCapitalWithInfoPrompt;
 
     public OpenAIServiceImpl(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
@@ -57,6 +56,22 @@ public class OpenAIServiceImpl implements OpenAIService {
         var beanOutputConverter = new BeanOutputConverter<>(GetCapitalResponse.class);
         String jsonFormat = beanOutputConverter.getFormat();
 
+        String responseContent = getCapitalResponseContent(request, jsonFormat);
+
+        return beanOutputConverter.convert(responseContent);
+    }
+
+    @Override
+    public GetCapitalWithInfoResponse getCapitalWithInfo(GetCapitalRequest request) {
+        var beanOutputConverter = new BeanOutputConverter<>(GetCapitalWithInfoResponse.class);
+        String jsonFormat = beanOutputConverter.getFormat();
+
+        String responseContent = getCapitalResponseContent(request, jsonFormat);
+
+        return beanOutputConverter.convert(responseContent);
+    }
+
+    private String getCapitalResponseContent(GetCapitalRequest request, String jsonFormat) {
         var promptTemplate = new PromptTemplate(getCapitalPrompt);
         var prompt = promptTemplate.create(Map
                 .of("stateOrCountry", request.stateOrCountry(),
@@ -68,21 +83,8 @@ public class OpenAIServiceImpl implements OpenAIService {
                 .chatResponse();
 
         String responseContent = response.getResult().getOutput().getContent();
+
         log.info(responseContent);
-
-        return beanOutputConverter.convert(responseContent);
-    }
-
-    @Override
-    public Answer getCapitalWithInfo(GetCapitalRequest request) {
-        var promptTemplate = new PromptTemplate(getCapitalWithInfoPrompt);
-        var prompt = promptTemplate.create(Map.of("stateOrCountry", request.stateOrCountry()));
-
-        ChatResponse response = chatClient
-                .prompt(prompt)
-                .call()
-                .chatResponse();
-
-        return new Answer(response.getResult().getOutput().getContent());
+        return responseContent;
     }
 }

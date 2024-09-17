@@ -3,6 +3,7 @@ package com.study.spring6ai.controllers;
 import com.study.spring6ai.model.Answer;
 import com.study.spring6ai.model.GetCapitalRequest;
 import com.study.spring6ai.model.GetCapitalResponse;
+import com.study.spring6ai.model.GetCapitalWithInfoResponse;
 import com.study.spring6ai.model.Question;
 import com.study.spring6ai.services.OpenAIService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,7 @@ public class QuestionController {
     }
 
     @GetMapping("/capitalWithInfo")
-    public Answer getCapitalWithInfo(@RequestBody GetCapitalRequest request) {
+    public GetCapitalWithInfoResponse getCapitalWithInfo(@RequestBody GetCapitalRequest request) {
         return openAIService.getCapitalWithInfo(request);
     }
 }
