@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: spring-6-ai
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
