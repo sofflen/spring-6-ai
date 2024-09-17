@@ -2,6 +2,7 @@ package com.study.spring6ai.services;
 
 import com.study.spring6ai.model.Answer;
 import com.study.spring6ai.model.GetCapitalRequest;
+import com.study.spring6ai.model.GetCapitalResponse;
 import com.study.spring6ai.model.Question;
 
 public interface OpenAIService {
@@ -10,7 +11,7 @@ public interface OpenAIService {
 
     Answer getAnswer(Question question);
 
-    Answer getCapital(GetCapitalRequest request);
+    GetCapitalResponse getCapital(GetCapitalRequest request);
 
     Answer getCapitalWithInfo(GetCapitalRequest request);
 }

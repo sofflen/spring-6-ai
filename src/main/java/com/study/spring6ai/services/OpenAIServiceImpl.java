@@ -1,15 +1,14 @@
 package com.study.spring6ai.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.spring6ai.model.Answer;
 import com.study.spring6ai.model.GetCapitalRequest;
+import com.study.spring6ai.model.GetCapitalResponse;
 import com.study.spring6ai.model.Question;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -21,16 +20,14 @@ import java.util.Map;
 public class OpenAIServiceImpl implements OpenAIService {
 
     private final ChatClient chatClient;
-    private final ObjectMapper objectMapper;
 
     @Value("classpath:templates/get-capital-prompt.st")
     private Resource getCapitalPrompt;
     @Value("classpath:templates/get-capital-with-info-prompt.st")
     private Resource getCapitalWithInfoPrompt;
 
-    public OpenAIServiceImpl(ChatClient.Builder chatClientBuilder, ObjectMapper objectMapper) {
+    public OpenAIServiceImpl(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -56,9 +53,14 @@ public class OpenAIServiceImpl implements OpenAIService {
     }
 
     @Override
-    public Answer getCapital(GetCapitalRequest request) {
+    public GetCapitalResponse getCapital(GetCapitalRequest request) {
+        var beanOutputConverter = new BeanOutputConverter<>(GetCapitalResponse.class);
+        String jsonFormat = beanOutputConverter.getFormat();
+
         var promptTemplate = new PromptTemplate(getCapitalPrompt);
-        var prompt = promptTemplate.create(Map.of("stateOrCountry", request.stateOrCountry()));
+        var prompt = promptTemplate.create(Map
+                .of("stateOrCountry", request.stateOrCountry(),
+                        "format", jsonFormat));
 
         ChatResponse response = chatClient
                 .prompt(prompt)
@@ -68,16 +70,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         String responseContent = response.getResult().getOutput().getContent();
         log.info(responseContent);
 
-        String responseJson;
-        try {
-            JsonNode jsonNode = objectMapper.readTree(responseContent);
-            responseJson = jsonNode.get("answer").asText();
-        } catch (JsonProcessingException e) {
-            log.error("Error during processing of responseContent");
-            throw new RuntimeException(e);
-        }
-
-        return new Answer(responseJson);
+        return beanOutputConverter.convert(responseContent);
     }
 
     @Override
