@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.spring6ai.model.Answer;
 import com.study.spring6ai.model.GetCapitalRequest;
 import com.study.spring6ai.model.Question;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
+@Log4j2
 public class OpenAIServiceImpl implements OpenAIService {
 
     private final ChatClient chatClient;
@@ -64,14 +66,15 @@ public class OpenAIServiceImpl implements OpenAIService {
                 .chatResponse();
 
         String responseContent = response.getResult().getOutput().getContent();
-        System.out.println(responseContent);
+        log.info(responseContent);
 
         String responseJson;
         try {
             JsonNode jsonNode = objectMapper.readTree(responseContent);
             responseJson = jsonNode.get("answer").asText();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error during processing of responseContent", e);
+            log.error("Error during processing of responseContent");
+            throw new RuntimeException(e);
         }
 
         return new Answer(responseJson);
